@@ -3,247 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Avanzado de Bode</title>
+    <title>Bode Plotter Pro</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #f4f4f9; color: #333; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
-        .container { display: flex; flex: 1; overflow: hidden; }
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --bg-panel: #f8fafc;
+            --text-main: #334155;
+            --border: #e2e8f0;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; background: #ffffff; color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Panel de Control y Fórmulas */
-        .sidebar { width: 350px; background: white; padding: 20px; overflow-y: auto; border-right: 1px solid #ddd; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
-        .input-group { margin-bottom: 20px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; }
-        input[type="text"] { width: 95%; padding: 10px; font-size: 16px; border: 2px solid #3498db; border-radius: 4px; font-family: 'Courier New', monospace; }
-        button { background: #3498db; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; border-radius: 4px; width: 100%; margin-top: 10px; transition: 0.3s; }
-        button:hover { background: #2980b9; }
+        /* --- Sidebar de Control --- */
+        .sidebar { 
+            width: 320px; 
+            background: var(--bg-panel); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px; 
+            box-shadow: 4px 0 10px rgba(0,0,0,0.03);
+            overflow-y: auto;
+        }
+
+        h2 { font-size: 1.2rem; color: #0f172a; margin-top: 0; margin-bottom: 20px; text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+
+        /* Inputs Estilizados */
+        .control-group { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .input-label { font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 5px; display: block; }
         
-        .results-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 10px; margin-top: 20px; }
-        .formula-box { background: #fdfefe; border: 1px solid #eee; padding: 10px; margin-top: 20px; font-size: 0.9em; }
+        .math-input {
+            width: 100%; box-sizing: border-box; padding: 8px 10px; 
+            font-family: 'Courier New', monospace; font-size: 1rem;
+            border: 1px solid #cbd5e1; border-radius: 6px;
+            transition: all 0.2s; margin-bottom: 10px;
+        }
+        .math-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+        /* Botón */
+        .btn-calc {
+            background: var(--primary); color: white; border: none; padding: 12px;
+            border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%;
+            transition: background 0.2s;
+        }
+        .btn-calc:hover { background: var(--secondary); }
+
+        /* Panel de Márgenes (Resultados) */
+        .stats-panel {
+            background: #eff6ff; border: 1px solid #dbeafe; border-radius: 8px; padding: 15px;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .stat-label { color: #475569; }
+        .stat-val { font-weight: bold; font-family: monospace; color: #0f172a; }
         
-        /* Área de Gráficos */
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        .plot-container { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 10px; height: 45%; }
+        .verdict { text-align: center; font-weight: bold; margin-top: 10px; padding-top: 10px; border-top: 1px solid #bfdbfe; }
+
+        /* Sección Desplegable (Details/Summary) */
+        details {
+            margin-top: 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            overflow: hidden;
+        }
+        summary {
+            background: #f1f5f9; padding: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            list-style: none; /* Ocultar triángulo default */
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        summary::after { content: '+'; font-weight: bold; }
+        details[open] summary::after { content: '-'; }
         
-        h3 { color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
-        .error-msg { color: #e74c3c; font-weight: bold; margin-top: 10px; display: none; }
+        .formulas-content { padding: 15px; font-size: 0.85rem; line-height: 1.6; }
+
+        /* --- Área Principal --- */
+        .main-view { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #fff; }
+        .plot-box { flex: 1; border: 1px solid var(--border); border-radius: 8px; position: relative; }
+        
+        .error-toast { 
+            background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 6px; 
+            font-size: 0.9rem; margin-top: 10px; display: none; border: 1px solid #fecaca;
+        }
     </style>
 </head>
 <body>
 
-<header>
-    <h2>Simulador Interactivo: Diagrama de Bode</h2>
-</header>
-
-<div class="container">
-    <div class="sidebar">
-        <div class="input-group">
-            <label for="tfInput">Función de Transferencia \( H(s) \):</label>
-            <input type="text" id="tfInput" value="100 / (s^2 + 10*s + 100)" placeholder="Ej: 1 / (s + 1)">
-            <small style="color: #7f8c8d;">Usa 's' como variable. Ej: <code>10/(s*(s+2))</code></small>
-            <button onclick="calculateBode()">Actualizar Gráficos</button>
-            <div id="errorDisplay" class="error-msg"></div>
-        </div>
-
-        <div class="results-box">
-            <h3>Márgenes de Estabilidad</h3>
-            <p><strong>Margen de Ganancia (GM):</strong> <span id="gmValue">--</span> dB</p>
-            <p>Frec. de Cruce de Fase (\(\omega_{pc}\)): <span id="wpcValue">--</span> rad/s</p>
-            <hr>
-            <p><strong>Margen de Fase (PM):</strong> <span id="pmValue">--</span> deg</p>
-            <p>Frec. de Cruce de Ganancia (\(\omega_{gc}\)): <span id="wgcValue">--</span> rad/s</p>
-            <p id="stabilityVerdict" style="font-weight: bold; margin-top:10px;"></p>
-        </div>
-
-        <div class="formula-box">
-            <h3>Fórmulas Teóricas</h3>
-            <p>Sea \( s = j\omega \):</p>
-            <p><strong>Magnitud (dB):</strong></p>
-            $$ M_{dB} = 20 \log_{10} |H(j\omega)| $$
-            
-            <p><strong>Fase (grados):</strong></p>
-            $$ \phi = \angle H(j\omega) = \tan^{-1}\left(\frac{Im}{Re}\right) $$
-            
-            <p><strong>Criterios:</strong></p>
-            <ul>
-                <li>\(\omega_{gc}\): Frecuencia donde \( |H| = 1 \) (0 dB).</li>
-                <li>\(\omega_{pc}\): Frecuencia donde \( \phi = -180^\circ \).</li>
-                <li><strong>PM:</strong> \( 180^\circ + \phi(\omega_{gc}) \)</li>
-                <li><strong>GM:</strong> \( 0 - M_{dB}(\omega_{pc}) \)</li>
-            </ul>
-        </div>
+<div class="sidebar">
+    <h2>Control de Sistema</h2>
+    
+    <div class="control-group">
+        <label class="input-label">Numerador N(s)</label>
+        <input type="text" class="math-input" id="numInput" value="100">
+        
+        <label class="input-label">Denominador D(s)</label>
+        <input type="text" class="math-input" id="denInput" value="s^2 + 10*s + 100">
+        
+        <button class="btn-calc" onclick="updateBode()">Generar Gráficos</button>
+        <div id="errorMsg" class="error-toast"></div>
     </div>
 
-    <div class="main-content">
-        <div id="magPlot" class="plot-container"></div>
-        <div id="phasePlot" class="plot-container"></div>
+    <div class="stats-panel">
+        <div style="font-size:0.8rem; text-transform:uppercase; color:#64748b; margin-bottom:10px; letter-spacing:1px;">Análisis de Estabilidad</div>
+        <div class="stat-row">
+            <span class="stat-label">Margen Fase (PM):</span>
+            <span class="stat-val" id="pmDisplay">--</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Frec. Cruce (\(\omega_{gc}\)):</span>
+            <span class="stat-val" id="wgcDisplay">--</span>
+        </div>
+        <hr style="border:0; border-top:1px solid #dbeafe;">
+        <div class="stat-row">
+            <span class="stat-label">Margen Ganancia (GM):</span>
+            <span class="stat-val" id="gmDisplay">--</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Frec. Cruce (\(\omega_{pc}\)):</span>
+            <span class="stat-val" id="wpcDisplay">--</span>
+        </div>
+        <div id="stabVerdict" class="verdict">--</div>
     </div>
+
+    <details>
+        <summary>Fórmulas y Teoría</summary>
+        <div class="formulas-content">
+            <p>La función de transferencia total es:</p>
+            $$ H(s) = \frac{N(s)}{D(s)} $$
+            <p>Sustituyendo \( s = j\omega \):</p>
+            <p><strong>Magnitud:</strong></p>
+            $$ M_{dB} = 20 \log_{10} \left| \frac{N(j\omega)}{D(j\omega)} \right| $$
+            <p><strong>Fase:</strong></p>
+            $$ \phi = \angle N(j\omega) - \angle D(j\omega) $$
+        </div>
+    </details>
+</div>
+
+<div class="main-view">
+    <div id="magPlot" class="plot-box"></div>
+    <div id="phasePlot" class="plot-box"></div>
 </div>
 
 <script>
-    // Configuración Inicial
-    const w_start = 0.1;
-    const w_end = 1000;
-    const points = 500;
+    // Configuración Base
+    const w_min = 0.1;
+    const w_max = 10000;
+    const resolution = 600;
 
-    function generateLogSpace(start, end, num) {
+    function getLogspace(start, end, n) {
         const logStart = Math.log10(start);
         const logEnd = Math.log10(end);
-        const step = (logEnd - logStart) / (num - 1);
-        return Array.from({length: num}, (_, i) => Math.pow(10, logStart + (i * step)));
+        const step = (logEnd - logStart) / (n - 1);
+        return Array.from({length: n}, (_, i) => Math.pow(10, logStart + (i * step)));
     }
 
-    function calculateBode() {
-        const exprStr = document.getElementById('tfInput').value;
-        const errorDiv = document.getElementById('errorDisplay');
-        const gmSpan = document.getElementById('gmValue');
-        const pmSpan = document.getElementById('pmValue');
-        const wpcSpan = document.getElementById('wpcValue');
-        const wgcSpan = document.getElementById('wgcValue');
-        const verdict = document.getElementById('stabilityVerdict');
-
-        errorDiv.style.display = 'none';
-
+    function updateBode() {
+        // Elementos DOM
+        const numStr = document.getElementById('numInput').value;
+        const denStr = document.getElementById('denInput').value;
+        const errorBox = document.getElementById('errorMsg');
+        
+        // Reset UI
+        errorBox.style.display = 'none';
+        
         try {
-            const compiledExpr = math.compile(exprStr);
-            const freqs = generateLogSpace(w_start, w_end, points);
+            const numExpr = math.compile(numStr);
+            const denExpr = math.compile(denStr);
             
-            const magnitudes = [];
-            const phases = [];
-            const magDBs = [];
+            const freqs = getLogspace(w_min, w_max, resolution);
+            const magData = []; // dB
+            const phaseData = []; // degrees
             
-            // Arrays para detección de cruces
-            let pm = null; // Phase Margin
-            let gm = null; // Gain Margin
-            let w_gc = null; // Gain Crossover Freq
-            let w_pc = null; // Phase Crossover Freq
+            // Arrays temporales para calculo de cruces
+            let pm = null, gm = null, w_gc = null, w_pc = null;
 
-            // Cálculo de datos
-            freqs.forEach(w => {
-                // Evaluar H(jw)
-                const sVal = math.complex(0, w);
-                const result = compiledExpr.evaluate({ s: sVal });
+            // 1. Calcular Datos
+            for (let w of freqs) {
+                const s = math.complex(0, w);
                 
-                // Magnitud
-                const mag = result.abs();
+                // Evaluar Num y Den por separado
+                const nVal = numExpr.evaluate({s: s});
+                const dVal = denExpr.evaluate({s: s});
+                
+                // H(s) = N/D
+                const hVal = math.divide(nVal, dVal);
+                
+                // Magnitud en dB
+                const mag = hVal.abs();
                 const db = 20 * Math.log10(mag);
-                magnitudes.push(mag);
-                magDBs.push(db);
-
-                // Fase (Unwrapped logic simplificada para visualización básica)
-                let phase = result.arg() * (180 / Math.PI); 
-                // Ajustar a rango -270 a 90 para visualización típica de control
-                // Nota: Un unwrapping real completo requiere historial, aquí usamos math.js standard
-                phases.push(phase);
-            });
-
-            // --- Algoritmo simple para encontrar márgenes ---
-            // 1. Encontrar Wgc (donde magDB cruza 0)
-            for (let i = 0; i < magDBs.length - 1; i++) {
-                if ((magDBs[i] >= 0 && magDBs[i+1] < 0) || (magDBs[i] <= 0 && magDBs[i+1] > 0)) {
-                    w_gc = freqs[i]; // Aprox
-                    // Calcular Fase en Wgc
-                    const phaseAtWgc = phases[i];
-                    pm = 180 + phaseAtWgc; 
-                    break; 
-                }
+                magData.push(db);
+                
+                // Fase en Grados
+                // Math.js 'arg' devuelve radianes. Convertimos a grados.
+                let deg = hVal.arg() * (180 / Math.PI);
+                phaseData.push(deg);
             }
 
-            // 2. Encontrar Wpc (donde phase cruza -180)
-            for (let i = 0; i < phases.length - 1; i++) {
-                // Detectar cruce por -180 (asumiendo continuidad)
-                if ((phases[i] >= -180 && phases[i+1] < -180)) {
-                    w_pc = freqs[i];
-                    // Calcular Ganancia en Wpc
-                    const dbAtWpc = magDBs[i];
-                    gm = 0 - dbAtWpc;
+            // 2. Corrección de Fase (Simple Unwrapping para visualización)
+            // Esto evita saltos bruscos de 180 a -180
+            for (let i = 1; i < phaseData.length; i++) {
+                let diff = phaseData[i] - phaseData[i-1];
+                if (diff > 180) phaseData[i] -= 360;
+                else if (diff < -180) phaseData[i] += 360;
+            }
+
+            // 3. Calcular Márgenes (Lógica de detección de cruce)
+            // PM: Margen de Fase donde dB cruza 0
+            for (let i = 0; i < magData.length - 1; i++) {
+                if ((magData[i] >= 0 && magData[i+1] < 0) || (magData[i] <= 0 && magData[i+1] > 0)) {
+                    w_gc = freqs[i];
+                    // Normalizar fase a -180...180 para el cálculo del margen
+                    let pAtGc = phaseData[i];
+                    // Ajuste simple: Margen es distancia a -180
+                    // PM = 180 + Phase (si la fase está entre -180 y 0)
+                    // Para sistemas estandar, buscamos cuan lejos estamos de la inestabilidad (-180)
+                    while (pAtGc > 180) pAtGc -= 360;
+                    while (pAtGc <= -180) pAtGc += 360;
+                    
+                    pm = 180 + pAtGc; 
                     break;
                 }
             }
 
-            // Actualizar UI de márgenes
-            wgcSpan.innerText = w_gc ? w_gc.toFixed(2) : "N/A";
-            pmSpan.innerText = pm ? pm.toFixed(2) : "Inf";
-            wpcSpan.innerText = w_pc ? wpc.toFixed(2) : "N/A";
-            gmSpan.innerText = gm ? gm.toFixed(2) : "Inf";
-
-            if (pm > 0 && gm > 0) {
-                verdict.innerText = "Sistema Estable";
-                verdict.style.color = "green";
-            } else if (pm !== null || gm !== null) {
-                verdict.innerText = "Posible Inestabilidad";
-                verdict.style.color = "red";
-            } else {
-                verdict.innerText = "Indeterminado / Margen Infinito";
-                verdict.style.color = "orange";
+            // GM: Margen de Ganancia donde Fase cruza -180
+            for (let i = 0; i < phaseData.length - 1; i++) {
+                // Buscar cruce por -180, -540, etc. (multiplos impares de 180 negativo)
+                // Simplificación: Buscar cruce por -180 en la gráfica unwrapped
+                // Ojo: Esto depende mucho del sistema. Asumimos cruce principal.
+                if ((phaseData[i] >= -180 && phaseData[i+1] < -180)) {
+                    w_pc = freqs[i];
+                    gm = 0 - magData[i]; // dB bajo 0 es ganancia positiva
+                    break;
+                }
             }
 
-            // --- Gráfico de Magnitud ---
-            const traceMag = {
-                x: freqs,
-                y: magDBs,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Magnitud (dB)',
-                line: { color: '#2980b9', width: 3 },
-                hovertemplate: 'Frec: %{x:.2f} rad/s<br>Mag: %{y:.2f} dB<extra></extra>'
-            };
+            // 4. Actualizar Panel de Datos
+            document.getElementById('wgcDisplay').textContent = w_gc ? w_gc.toFixed(2) + ' rad/s' : 'N/A';
+            document.getElementById('pmDisplay').textContent = pm ? pm.toFixed(1) + '°' : 'Inf';
+            
+            document.getElementById('wpcDisplay').textContent = w_pc ? w_pc.toFixed(2) + ' rad/s' : 'N/A';
+            document.getElementById('gmDisplay').textContent = gm ? gm.toFixed(1) + ' dB' : 'Inf';
 
-            const layoutMag = {
-                title: 'Diagrama de Bode - Magnitud',
-                xaxis: { type: 'log', title: 'Frecuencia (rad/s)', gridcolor: '#eee' },
-                yaxis: { title: 'Magnitud (dB)', gridcolor: '#eee' },
-                margin: { t: 40, r: 20, b: 40, l: 60 },
-                shapes: [
-                    { type: 'line', y0: 0, y1: 0, x0: w_start, x1: w_end, line: {color: 'red', width: 1, dash: 'dot'} }
-                ]
-            };
+            const verdictEl = document.getElementById('stabVerdict');
+            if (pm > 0 && (gm > 0 || gm === null)) {
+                verdictEl.textContent = "SISTEMA ESTABLE";
+                verdictEl.style.color = "#16a34a"; // Green
+            } else if (pm <= 0 || (gm !== null && gm <= 0)) {
+                verdictEl.textContent = "INESTABLE";
+                verdictEl.style.color = "#dc2626"; // Red
+            } else {
+                verdictEl.textContent = "Marginal / Indeterminado";
+                verdictEl.style.color = "#ca8a04"; // Yellow
+            }
 
-            // --- Gráfico de Fase ---
-            const tracePhase = {
-                x: freqs,
-                y: phases,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'Fase (deg)',
-                line: { color: '#e74c3c', width: 3 },
-                hovertemplate: 'Frec: %{x:.2f} rad/s<br>Fase: %{y:.2f}°<extra></extra>'
-            };
+            // 5. Graficar con Plotly
+            drawPlots(freqs, magData, phaseData);
 
-            const layoutPhase = {
-                title: 'Diagrama de Bode - Fase',
-                xaxis: { type: 'log', title: 'Frecuencia (rad/s)', gridcolor: '#eee' },
-                yaxis: { title: 'Fase (grados)', gridcolor: '#eee' },
-                margin: { t: 40, r: 20, b: 40, l: 60 },
-                shapes: [
-                    { type: 'line', y0: -180, y1: -180, x0: w_start, x1: w_end, line: {color: 'black', width: 1, dash: 'dot'} }
-                ]
-            };
-
-            Plotly.newPlot('magPlot', [traceMag], layoutMag, {responsive: true});
-            Plotly.newPlot('phasePlot', [tracePhase], layoutPhase, {responsive: true});
-
-        } catch (e) {
-            errorDiv.innerText = "Error en la función: Verifique paréntesis y operadores. " + e.message;
-            errorDiv.style.display = 'block';
+        } catch (err) {
+            errorBox.textContent = "Error de sintaxis: " + err.message;
+            errorBox.style.display = 'block';
         }
     }
 
-    // Inicializar al cargar
-    window.onload = calculateBode;
+    function drawPlots(x, mag, phase) {
+        const config = { responsive: true, displayModeBar: false };
+        const commonLayout = {
+            margin: { t: 30, r: 20, b: 30, l: 50 },
+            plot_bgcolor: "#fff",
+            paper_bgcolor: "#fff",
+            font: { family: 'Segoe UI, sans-serif' },
+            xaxis: { type: 'log', gridcolor: '#f1f5f9', showline: true },
+            yaxis: { gridcolor: '#f1f5f9', showline: true, zeroline: false }
+        };
+
+        // Magnitud
+        Plotly.newPlot('magPlot', [{
+            x: x, y: mag, type: 'scatter', mode: 'lines',
+            line: { color: '#2563eb', width: 2.5 },
+            name: 'Mag',
+            hovertemplate: '<b>%{y:.2f} dB</b><br>@ %{x:.2f} rad/s<extra></extra>'
+        }], { 
+            ...commonLayout, 
+            title: { text: 'Magnitud (dB)', font: {size: 14} },
+            shapes: [{type:'line', x0: w_min, x1: w_max, y0: 0, y1: 0, line: {color:'#ef4444', width:1, dash:'dash'}}]
+        }, config);
+
+        // Fase
+        Plotly.newPlot('phasePlot', [{
+            x: x, y: phase, type: 'scatter', mode: 'lines',
+            line: { color: '#dc2626', width: 2.5 },
+            name: 'Fase',
+            hovertemplate: '<b>%{y:.2f}°</b><br>@ %{x:.2f} rad/s<extra></extra>'
+        }], { 
+            ...commonLayout, 
+            title: { text: 'Fase (Grados)', font: {size: 14} },
+            shapes: [{type:'line', x0: w_min, x1: w_max, y0: -180, y1: -180, line: {color:'#0f172a', width:1, dash:'dash'}}]
+        }, config);
+    }
+
+    // Inicializar
+    updateBode();
     
-    // Permitir Enter para calcular
-    document.getElementById("tfInput").addEventListener("keyup", function(event) {
-        if (event.key === "Enter") {
-            calculateBode();
-        }
+    // Enter key support
+    document.querySelectorAll('.math-input').forEach(input => {
+        input.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') updateBode();
+        });
     });
 
 </script>
-
 </body>
 </html>
