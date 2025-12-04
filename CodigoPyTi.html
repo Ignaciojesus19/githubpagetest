@@ -8,18 +8,18 @@ def sistema(x):
     # x[0]=1, x[1]=2, x[2]=3, x[3]=4
     
     # Ec 1: Suma = 10
-    eq1 = x[0] + x[1] + x[2]  -3 
+    eq1 = x[0] + x[1] + x[2] - 3 
     
     # Ec 2: Suma de cuadrados = 30
-    eq2 = x[0]**2 + x[1]**2 + x[2]**2  - 5
+    eq2 = x[0]**2 + x[1]**2 + x[2]**2 - 5
     
     # Ec 3: x0 * x3 = x1^2 (Producto cruzado)
-    eq3 = math.exp(x[0])-x[1]
+    eq3 = math.exp(x[0]) - x[1]
     
     # Ec 4: x2^2 - x3 = 5
-    #eq4 = x[2]**2 - x[3] - 5
+    # eq4 = x[2]**2 - x[3] - 5
     
-#    return [eq1, eq2, eq3, eq4]
+    # return [eq1, eq2, eq3, eq4]
     return [eq1, eq2, eq3]
 
 # --- 2. CONFIGURACIÓN INICIAL ---
@@ -29,7 +29,6 @@ def get_config():
     x_inicial = [0.5, 1.5, 2.5] 
     iteraciones = 10
     return x_inicial, iteraciones
-
 
 # ==========================================
 # NO TOCAR NADA DEBAJO DE ESTA LINEA
@@ -84,19 +83,14 @@ def main():
     for k in range(1, num_iter + 1):
         try:
             J, F = jacobiano(x_curr)
-            # F debe ser negativo para J*dx = -F
             minus_F = [-val for val in F]
-            
             delta = gauss_solve(J, minus_F)
             
-            # Actualizar
             for i in range(len(x_curr)):
                 x_curr[i] += delta[i]
                 
-            # Formato simple para ver progreso
             print("It", k, ":", [round(v, 4) for v in x_curr])
             
-            # Criterio de parada simple (si delta es muy chico)
             if all(abs(d) < 1e-6 for d in delta):
                 print("Convergencia alcanzada.")
                 break
@@ -110,7 +104,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
   </code></pre>
 
   <h2>Codigo Acoplamiento para matriz global NxN Python</h2>
