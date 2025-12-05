@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kit de Supervivencia: Newton-Raphson</title>
+    <!-- Tailwind CSS para diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax para renderizar ecuaciones matemáticas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- PrismJS para resaltar código Fortran -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2d2d2d;
+            color: #e0e0e0;
+            padding: 0.5rem 1rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .step-card {
+            transition: transform 0.2s;
+        }
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        /* Flowchart connector lines */
+        .flow-arrow::after {
+            content: '↓';
+            display: block;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            margin: 0.5rem 0;
+        }
+        .flow-arrow:last-child::after {
+            content: '';
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-life-ring mr-2"></i>Kit de Supervivencia: Newton-Raphson</h1>
+            <a href="#codigo-maestro" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold transition">
+                <i class="fas fa-code mr-2"></i>Ir al Código
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4 max-w-5xl">
+
+        <!-- Intro Section -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6 mt-4 border-l-4 border-blue-600">
+            <h2 class="text-2xl font-bold mb-4 text-blue-900">1. ¿Qué hace este código?</h2>
+            <p class="mb-4">Resuelve sistemas de ecuaciones no lineales (como mecanismos de posición) usando el método iterativo:</p>
+            <div class="bg-slate-50 p-4 rounded text-center text-lg shadow-inner mb-4">
+                $$x_{nuevo} = x_{viejo} - J^{-1} \cdot F(x)$$
+            </div>
+            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                <li><strong>\(F(x)\):</strong> Son tus ecuaciones (deben ser igual a cero).</li>
+                <li><strong>\(J\):</strong> Es la matriz Jacobiana (las derivadas parciales de cada ecuación).</li>
+            </ul>
+        </div>
+
+        <!-- Main Logic Flow -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <div class="md:col-span-2">
+                 <!-- Code Template Section -->
+                <div id="codigo-maestro" class="scroll-mt-24">
+                    <div class="code-header">
+                        <span class="font-mono text-sm">NewtonSolver_Template.f90</span>
+                        <button onclick="copyCode()" class="bg-blue-600 hover:bg-blue-500 text-xs text-white px-3 py-1 rounded transition">
+                            <i class="fas fa-copy mr-1"></i> COPIAR CÓDIGO
+                        </button>
+                    </div>
+                    <pre class="!m-0 rounded-b-lg !p-0"><code id="code-block" class="language-fortran">program NewtonSolver
+  implicit none
+  
+  ! --- 1. DECLARACION DE VARIABLES [EDITAR N] ---
+  ! Cambia el '3' por el numero de incognitas de tu problema
+  integer, parameter :: N = 3 
+  real :: dp(N,N), dq(N), p(N)     ! Matrices y vectores
+  real :: q(N)                     ! Vector de incognitas (x, y, theta...)
+  real :: error, suma
+  integer :: i
+  
+  ! --- 2. VALORES INICIALES (SEMILLA) [EDITAR] ---
+  ! Dales valores logicos segun el dibujo del mecanismo
+  q(1) = 44.0   ! Variable 1 (ej: ya)
+  q(2) = 100.0  ! Variable 2 (ej: xb)
+  q(3) = 60.0   ! Variable 3 (ej: yb)
+  
+  error = 100.0
+  dp = 0.0      ! Limpiar matriz
+  
+  print *, "--- INICIO DE ITERACIONES ---"
+
+  ! --- 3. BUCLE PRINCIPAL ---
+  do while(error > 0.001)  ! Tolerancia
+      
+     ! ---------------------------------------------------
+     ! A. TUS ECUACIONES (F) [EDITAR MUCHO AQUI]
+     ! Escribe las ecuaciones igualadas a cero.
+     ! Usa q(1), q(2), etc.
+     ! ---------------------------------------------------
+     ! Ejemplo: L^2 = (x2-x1)^2 + (y2-y1)^2
+     ! p(1) = ...
+     ! p(2) = ...
+     ! p(3) = ...
+     
+     ! ---------------------------------------------------
+     ! B. MATRIZ JACOBIANA (Derivadas) [EDITAR MUCHO AQUI]
+     ! dp(Fila, Columna) = Derivada de Ecuacion 'Fila' respecto a Variable 'Col'
+     ! ---------------------------------------------------
+     ! Fila 1 (Derivadas de p(1))
+     ! dp(1,1) = ... (derivada vs q1)
+     ! dp(1,2) = ... (derivada vs q2)
+     ! dp(1,3) = ... (derivada vs q3)
+     
+     ! ... Repetir para Fila 2 y 3 ...
+     
+     ! ---------------------------------------------------
+     ! C. RESOLVER SISTEMA (NO TOCAR)
+     ! ---------------------------------------------------
+     p = -p  ! Importante: Newton usa -F
+     call gj_corregido(dp, p, N, dq)
+     
+     ! ---------------------------------------------------
+     ! D. ACTUALIZAR Y CALCULAR ERROR (NO TOCAR)
+     ! ---------------------------------------------------
+     suma = 0.0
+     do i = 1, N
+        q(i) = q(i) + dq(i)  ! x_nuevo = x_viejo + correccion
+        suma = suma + dq(i)**2
+     end do
+     error = sqrt(suma)
+     
+     write(*,*) "Error:", error, " Vars:", q
+  end do
+  
+  print *, "RESULTADO FINAL:", q
+  pause
+end program NewtonSolver
+
+! =======================================================
+! SUBRUTINA ROBUSTA (COPIAR Y PEGAR SIN MIRAR)
+! =======================================================
+subroutine gj_corregido(A, b, dim, sol)
+  implicit none
+  integer, intent(in) :: dim
+  real, intent(in) :: A(dim,dim), b(dim)
+  real, intent(out) :: sol(dim)
+  integer :: i, j, k, max_row
+  real :: m_amp(dim, dim+1), temp_row(dim+1), pivot
+
+  m_amp(1:dim, 1:dim) = A
+  m_amp(:, dim+1) = b
+
+  do i = 1, dim
+     ! PIVOTEO PARCIAL (Evita division por cero)
+     max_row = i
+     do k = i+1, dim
+        if (abs(m_amp(k,i)) > abs(m_amp(max_row,i))) max_row = k
+     end do
+     if (max_row /= i) then
+        temp_row = m_amp(i,:)
+        m_amp(i,:) = m_amp(max_row,:)
+        m_amp(max_row,:) = temp_row
+     end if
+
+     pivot = m_amp(i,i)
+     if (abs(pivot) < 1.0E-8) then
+        print *, "Error: Matriz Singular"
+        stop
+     end if
+     m_amp(i,:) = m_amp(i,:) / pivot
+     do j = 1, dim
+        if (j /= i) m_amp(j,:) = m_amp(j,:) - m_amp(i,:) * m_amp(j,i)
+     end do
+  end do
+  sol = m_amp(:, dim+1)
+end subroutine gj_corregido</code></pre>
+                </div>
+            </div>
+
+            <!-- Flowchart Sidebar -->
+            <div class="md:col-span-1">
+                <div class="bg-white p-4 rounded shadow sticky top-20">
+                    <h3 class="font-bold text-gray-700 border-b pb-2 mb-4">Lógica del Programa</h3>
+                    <div class="flex flex-col items-center text-sm">
+                        <div class="flow-arrow w-full">
+                            <div class="bg-green-100 border border-green-400 p-2 rounded text-center font-bold">INICIO<br><span class="text-xs font-normal">Valores Semilla</span></div>
+                        </div>
+                        <div class="flow-arrow w-full">
+                            <div class="bg-blue-100 border border-blue-400 p-2 rounded text-center">
+                                <strong>Evaluar P(q)</strong><br>
+                                ¿Es Error ≈ 0?
+                            </div>
+                        </div>
+                        <div class="flow-arrow w-full">
+                            <div class="bg-yellow-100 border border-yellow-400 p-2 rounded text-center">
+                                <strong>Calcular Jacobiano</strong><br>
+                                Derivadas parciales
+                            </div>
+                        </div>
+                        <div class="flow-arrow w-full">
+                            <div class="bg-red-100 border border-red-400 p-2 rounded text-center">
+                                <strong>Gauss-Jordan</strong><br>
+                                Resolver dq
+                            </div>
+                        </div>
+                        <div class="flow-arrow w-full">
+                            <div class="bg-purple-100 border border-purple-400 p-2 rounded text-center">
+                                <strong>Actualizar</strong><br>
+                                q = q + dq
+                            </div>
+                        </div>
+                         <div class="w-full">
+                            <div class="bg-green-600 text-white p-2 rounded text-center font-bold shadow-lg">FIN<br><span class="text-xs font-normal">Resultado Convergente</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editing Guide -->
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Guía de Edición para la Prueba</h2>
+        
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Paso 1 -->
+            <div class="step-card bg-white p-6 rounded-lg shadow border-t-4 border-indigo-500">
+                <h3 class="font-bold text-lg mb-2 text-indigo-700">Paso 1: Variables (N y q)</h3>
+                <p class="text-sm text-gray-600 mb-3">Mira el mecanismo. ¿Cuántas cosas <strong>NO</strong> sabes?</p>
+                <div class="bg-gray-100 p-3 rounded text-sm font-mono mb-2">
+                    integer, parameter :: N = 3
+                </div>
+                <p class="text-sm">Usa el vector <code>q</code> para todo:</p>
+                <ul class="text-sm list-disc list-inside mt-2 text-gray-600">
+                    <li>q(1) es \(x_B\)</li>
+                    <li>q(2) es \(y_B\)</li>
+                    <li>q(3) es \(\theta_3\)</li>
+                </ul>
+            </div>
+
+            <!-- Paso 2 -->
+            <div class="step-card bg-white p-6 rounded-lg shadow border-t-4 border-pink-500">
+                <h3 class="font-bold text-lg mb-2 text-pink-700">Paso 2: Las Ecuaciones (p)</h3>
+                <p class="text-sm text-gray-600 mb-3">Todo debe pasar a un lado para igualar a cero.</p>
+                <div class="bg-red-50 p-2 rounded border border-red-200 mb-2">
+                    <small class="text-red-700 block mb-1">Problema:</small>
+                    \((x - 5)^2 + y^2 = 100\)
+                </div>
+                <div class="bg-green-50 p-2 rounded border border-green-200">
+                    <small class="text-green-700 block mb-1">Código:</small>
+                    <code class="text-xs">p(1) = (q(1)-5.0)**2 + q(2)**2 - 100.0</code>
+                </div>
+            </div>
+
+            <!-- Paso 3 -->
+            <div class="step-card bg-white p-6 rounded-lg shadow border-t-4 border-yellow-500 md:col-span-2">
+                <h3 class="font-bold text-lg mb-2 text-yellow-700">Paso 3: El Jacobiano (dp) - ¡Cuidado Aquí!</h3>
+                <p class="text-sm text-gray-600 mb-4">Tienes que derivar mentalmente cada ecuación <code>p</code> respecto a cada variable <code>q</code>.</p>
+                
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1 bg-yellow-50 p-4 rounded border border-yellow-200">
+                        <strong class="block text-yellow-800 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i> Truco Regla de la Cadena</strong>
+                        <p class="text-sm mb-2">Si tienes: \((A - q(1))^2\)</p>
+                        <p class="text-sm">Derivada vs q(1):</p>
+                        <code class="block bg-white p-2 mt-1 rounded border border-yellow-300">2 * (A - q(1)) * (-1)</code>
+                        <p class="text-xs text-red-600 mt-2 font-bold">¡No olvides el (-1) si la variable tiene un menos delante!</p>
+                    </div>
+                    <div class="flex-1 text-sm">
+                        <p class="font-semibold mb-2">Llenado de matriz:</p>
+                        <pre class="bg-gray-800 text-green-400 p-3 rounded text-xs">
+! Fila 1 (Derivadas Ec 1)
+dp(1,1) = ... ! vs q(1)
+dp(1,2) = ... ! vs q(2)
+dp(1,3) = ... ! vs q(3)</pre>
+                    </div>
+                </div>
+            </div>
+            
+             <!-- Paso 4 -->
+             <div class="step-card bg-white p-6 rounded-lg shadow border-t-4 border-gray-500 md:col-span-2">
+                <h3 class="font-bold text-lg mb-2 text-gray-700">Paso 4: La Subrutina y Resumen</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-800 font-bold">Subrutina gj_corregido:</p>
+                        <p class="text-sm text-gray-600">NO LA TOQUES. Cópiala y pégala al final. Ella evita la división por cero usando pivoteo parcial.</p>
+                    </div>
+                    <ul class="text-sm space-y-2">
+                        <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> <span>Recuerda <code>p = -p</code> antes de llamar (Newton usa -F).</span></li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> <span>Usa <code>q(i)</code> para todo, no variables sueltas.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm pb-8">
+            <p>Generado para tu Kit de Supervivencia Fortran.</p>
+        </footer>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-fortran.min.js"></script>
+    
+    <script>
+        function copyCode() {
+            const codeText = document.getElementById('code-block').innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const btn = document.querySelector('button[onclick="copyCode()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i> ¡COPIADO!';
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+                btn.classList.add('bg-green-600', 'hover:bg-green-500');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+                    btn.classList.remove('bg-green-600', 'hover:bg-green-500');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
